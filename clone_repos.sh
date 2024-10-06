@@ -1,8 +1,21 @@
 #!/bin/bash
 
+# 设置根目录
+base_dir="/root"
+
 # 设置源目录和目标目录
-src_dir="~/Downloads/cloner/PoC-in-GitHub"
-dest_dir="~/Downloads/cloner/poc-repo"
+src_dir="$base_dir/PoC-in-GitHub"
+dest_dir="$base_dir/poc-repo"
+progress_file="$base_dir/clone_progress.txt"  # 记录进度的文件
+
+# 创建一个进度文件（如果不存在）
+touch "$progress_file"
+
+# 函数：检查仓库是否已经克隆
+is_cloned() {
+    local repo_url="$1"
+    grep -q "$repo_url" "$progress_file"
+}
 
 # 遍历源目录下的所有目录
 for dir in "$src_dir"/*; do
@@ -27,7 +40,7 @@ for dir in "$src_dir"/*; do
                 
                 # 克隆每个GitHub repo到该目录中
                 for url in $urls; do
-                    # 使用正则表达式提取 GitHub 仓库的所有者和仓库名
+                    # 使用awk从url中提取所有者和仓库名
                     owner=$(echo "$url" | awk -F'/' '{print $(NF-1)}')
                     repo=$(echo "$url" | awk -F'/' '{print $NF}')
                     
@@ -35,8 +48,17 @@ for dir in "$src_dir"/*; do
                     clone_dir="$dest_dir/$dir_name/$json_name/$owner/$repo"
                     mkdir -p "$clone_dir"
                     
-                    # 克隆仓库到指定目录
-                    git clone "$url" "$clone_dir"
+                    # 检查该仓库是否已经克隆
+                    if is_cloned "$url"; then
+                        echo "Skipping already cloned repo: $url"
+                    else
+                        # 克隆仓库到指定目录
+                        echo "Cloning $url into $clone_dir"
+                        git clone "$url" "$clone_dir"
+                        
+                        # 将克隆完成的仓库链接记录到进度文件中
+                        echo "$url" >> "$progress_file"
+                    fi
                 done
             fi
         done
