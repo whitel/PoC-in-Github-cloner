@@ -54,7 +54,7 @@ for dir in "$src_dir"/*; do
                     else
                         # 克隆仓库到指定目录
                         echo "Cloning $url into $clone_dir"
-                        git clone "$url" "$clone_dir"
+                        git clone --depth 1 "$url" "$clone_dir"
                         
                         # 将克隆完成的仓库链接记录到进度文件中
                         echo "$url" >> "$progress_file"
